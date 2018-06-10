@@ -1,6 +1,4 @@
 const PORT = 7777;
-
-var http = require('http');
 var request = require('request');
 var Web3 = require('web3');
 var mysql = require('mysql');
@@ -12,7 +10,6 @@ var dbConnection = mysql.createConnection({
 	password: "1234",
 	database: "embeded_class"
 });
-var dbReturn;
 
 var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
