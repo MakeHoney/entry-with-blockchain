@@ -1,31 +1,37 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.0;
 
 contract Paper {
     uint256 keyIndex;
     struct userInformation {
-        string name;
-        string phoneNum;
-        string addr;
+        string userName;
+        string userAddress;
+        string userPhone;
+        string inTime;
     }
 
     mapping (uint256 => userInformation) Obj;
-    function setInformation(string _name, string _phoneNum, string _addr) constant returns (uint256) {
-        Obj[keyIndex].name = _name;
-        Obj[keyIndex].phoneNum = _phoneNum;
-        Obj[keyIndex].addr = _addr;
+    function setUserInformation(string _userName, string _userAddress, string _userPhone, string _inTime) constant returns (uint256) {
+        Obj[keyIndex].userName = _userName;
+        Obj[keyIndex].userAddress = _userAddress;
+        Obj[keyIndex].userPhone = _userPhone;
+        Obj[keyIndex].inTime = _inTime;
         keyIndex++;
         return keyIndex;
     }
 
-    function getName(uint _key) constant returns (string) {
-        return Obj[_key].name;
+    function getUserName(uint _key) constant returns (string) {
+        return Obj[_key].userName;
     }
 
-    function getPhoneNum(uint _key) constant returns (string) {
-        return Obj[_key].phoneNum;
+    function getUserAddress(uint _key) constant returns (string) {
+        return Obj[_key].userAddress;
     }
 
-    function getAddress(uint _key) constant returns (string) {
-        return Obj[_key].addr;
+    function getUserPhone(uint _key) constant returns (string) {
+        return Obj[_key].userPhone;
+    }
+
+    function getInTime(uint _key) constant returns (string) {
+        return Obj[_key].inTime;
     }
 }
