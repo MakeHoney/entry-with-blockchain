@@ -36,7 +36,7 @@ controller.on("message", function(msg, rinfo) {
 	web3.personal.unlockAccount(web3.eth.coinbase, "bhun");
 
 	/* database로부터 지문 정보를 불러온 뒤, 대조한다 */
-	var sql = "SELECT * FROM infos WHERE finger_print = '0'"; // const -> var
+	var sql = "SELECT * FROM infos WHERE finger_print = ${msg}"; // const -> var
 	dbConnection.query(sql, function(err, row) {
 		if(err) throw err;
 		console.log(row)
@@ -52,9 +52,9 @@ controller.on("message", function(msg, rinfo) {
 
 			/* database에서 불러온 정보들을 transaction에 담기 위해서 변수에 임시로 저장 */
 			var name = row[0].name,
-					address = row[0].address,
-					phone = row[0].phone,
-					inTime = new Date().toString();
+				address = row[0].address,
+				phone = row[0].phone,
+				inTime = new Date().toString();
 
 			var transactionHash =
 			paperInstance.setUserInformation.sendTransaction(name, address, phone, inTime, {from:web3.eth.coinbase, gas: '200000'});
@@ -76,7 +76,7 @@ controller.on("message", function(msg, rinfo) {
 			}, 50);
 		/* 지문 정보가 존재하지 않는다면 존재하지 않음을 알리고 아무일도 발생하지 않는다 */
 		} else {
-			console.log("invalid finger print");
+			console.log("회원정보가 존재하지 않습니다.");
 		}
 	});
 
@@ -84,8 +84,16 @@ controller.on("message", function(msg, rinfo) {
 
 	/* blockchain에 등록된 정보를 조회하기 위한 테스트 코드 */
 	var i = 0;
+	var name, address, phone, timestamp;
 	while(paperInstance.getUserName.call(i, {from:web3.eth.coinbase}).length) {
-		console.log(paperInstance.getUserName.call(i, {from:web3.eth.coinbase}))
+		name = paperInstance.getUserName.call(i, {from:web3.eth.coinbase});
+		adderss = paperInstance.getUserAddress.call(i, {from:web3.eth.coinbase});
+		phone = paperInstance.getUserPhone.call(i, {from:web3.eth.coinbase});
+		timestamp = paperInstance.getInTime.call(i, {from:web3.eth.coinbase});
+		
+		if(i == 0) console.log("출입 기록입니다.");
+
+		console.log("이름: " + name + "주소: " + address + "연락처: " + phone + "시간: " + timestamp);
 		i++;
 	}
 });
