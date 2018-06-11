@@ -14,7 +14,7 @@ var controller = dgram.createSocket("udp6");
 
 /* database 연결 초기화 */
 var dbConnection = mysql.createConnection({
-	host: "localhost",
+	host: "13.209.8.64",
 	user: "entry_manager",
 	password: "1234",
 	database: "embeded_class"
@@ -22,13 +22,13 @@ var dbConnection = mysql.createConnection({
 /* web3를 geth client와 연결 */
 var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 /* blockchain 내의 contract 주소 */
-var contractInstanceAddr = "0x19884a5f2da4d01b9788FC59ec1162D347658Dc1";
+var contractInstanceAddr = "0xedf024248419e6a52c2457ffc7e72709d7b8d882";
 /* 이미 생성되어 blockchain에 올라가 있는 인스턴스를 할당 */
 var paperInstance = web3.eth.contract(vars.abi).at(contractInstanceAddr);
 
 /* CoAP을 타고 온 message 수신 */
 controller.on("message", function(msg, rinfo) {
-	// msg = parse(msg).payload.toString();
+	msg = parse(msg).payload.toString();
 	// console.log("controller got : " + msg + " from " + rinfo.address + ":" + rinfo.port);
 	console.log("*** 모트로부터 메시지를 수신하였습니다. ***");
 
@@ -37,7 +37,9 @@ controller.on("message", function(msg, rinfo) {
 
 	/* database로부터 지문 정보를 불러온 뒤, 대조한다 */
 	// var sql = "SELECT * FROM infos WHERE finger_print = '" + msg + "'";
-	var sql = "SELECT * FROM infos WHERE finger_print = '0'"; 
+	var sql = "SELECT * FROM infos WHERE finger_print = '0'";
+
+	// var sql = "SELECT * FROM infos WHERE finger_print = '0'";
 	dbConnection.query(sql, function(err, row) {
 		if(err) throw err;
 		// console.log(row);
@@ -80,7 +82,8 @@ controller.on("message", function(msg, rinfo) {
 						console.log("*                                                                                   *");
 						console.log("*************************************************************************************\n");
 
-						sql = "INSERT INTO logs (name, address, phone, timestamp) VALUES('" + name + "','" + address + "','" + phone + "','" + inTime + "')"
+						sql = "INSERT INTO logs (name, address, phone, timestamp, transaction_hash) " +
+						"VALUES('" + name + "','" + address + "','" + phone + "','" + inTime + "','" + infoLog.transactionHash + "')"
 						dbConnection.query(sql);
 						sql = "SELECT * FROM logs"
 						dbConnection.query(sql, function(err, row) {
