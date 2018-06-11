@@ -30,16 +30,17 @@ var paperInstance = web3.eth.contract(vars.abi).at(contractInstanceAddr);
 controller.on("message", function(msg, rinfo) {
 	// msg = parse(msg).payload.toString();
 	// console.log("controller got : " + msg + " from " + rinfo.address + ":" + rinfo.port);
-	console.log("server got message");
+	console.log("*** 모트로부터 메시지를 수신하였습니다. ***");
 
 	/* transaction 발생시키기 이전 계정의 락을 풀어준다 */
 	web3.personal.unlockAccount(web3.eth.coinbase, "bhun");
 
 	/* database로부터 지문 정보를 불러온 뒤, 대조한다 */
-	var sql = "SELECT * FROM infos WHERE finger_print = ${msg}"; // const -> var
+	// var sql = "SELECT * FROM infos WHERE finger_print = ${msg}";
+	var sql = "SELECT * FROM infos WHERE finger_print = '0'"; // const -> var
 	dbConnection.query(sql, function(err, row) {
 		if(err) throw err;
-		console.log(row)
+		// console.log(row);
 
 		/* 지문 정보가 존재한다면 해당 지문에 해당하는 인물의 정보를 timestamp와 함께 transaction에 담아 발생시킨다 */
 		if(row.length > 0) {
@@ -65,11 +66,22 @@ controller.on("message", function(msg, rinfo) {
 				if(receipt != null) {
 					blockInfo.hash = receipt.blockHash;
 					blockInfo.number = receipt.blockNumber;
-					console.log(blockInfo.hash);
-					console.log(blockInfo.number);
 
 					/* blockchain에 입주자 정보가 등재되었다면 interval 함수를 중지시킨다 */
 					if(blockInfo.hash.length > 0) {
+						console.log("\n*** 블록체인에 출입정보가 정상적으로 기록되었습니다. ***");
+						console.log("-----------------------------------------------------------------------------");
+						console.log("블록해쉬 : " + blockInfo.hash);
+						console.log("블록번호 : " + blockInfo.number);
+						/* 트랜잭션 해쉬정보도 담기, 블록정보와 트개잭션 정보 디비에 저장하기 */
+						console.log("-----------------------------------------------------------------------------\n");
+
+						sql = "INSERT INTO logs (name, address, phone, timestamp) VALUES('" + name + "','" + address + "','" + phone + "','" + inTime + "')"
+						dbConnection.query(sql);
+						sql = "SELECT * FROM logs"
+						dbConnection.query(sql, function(err, row) {
+							console.log("row : ", row);
+						});
 						clearInterval(interval);
 					}
 				}
@@ -81,21 +93,6 @@ controller.on("message", function(msg, rinfo) {
 	});
 
 	// dbConnection.end();
-
-	/* blockchain에 등록된 정보를 조회하기 위한 테스트 코드 */
-	var i = 0;
-	var name, address, phone, timestamp;
-	while(paperInstance.getUserName.call(i, {from:web3.eth.coinbase}).length) {
-		name = paperInstance.getUserName.call(i, {from:web3.eth.coinbase});
-		adderss = paperInstance.getUserAddress.call(i, {from:web3.eth.coinbase});
-		phone = paperInstance.getUserPhone.call(i, {from:web3.eth.coinbase});
-		timestamp = paperInstance.getInTime.call(i, {from:web3.eth.coinbase});
-		
-		if(i == 0) console.log("출입 기록입니다.");
-
-		console.log("이름: " + name + "주소: " + address + "연락처: " + phone + "시간: " + timestamp);
-		i++;
-	}
 });
 
 /* CoAP 메세지 리스닝 */
