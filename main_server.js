@@ -22,7 +22,7 @@ var dbConnection = mysql.createConnection({
 /* web3를 geth client와 연결 */
 var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 /* blockchain 내의 contract 주소 */
-var contractInstanceAddr = "0x126b37bdedbb7d776b09398a23adb123949d88e3";
+var contractInstanceAddr = "0x19884a5f2da4d01b9788FC59ec1162D347658Dc1";
 /* 이미 생성되어 blockchain에 올라가 있는 인스턴스를 할당 */
 var paperInstance = web3.eth.contract(vars.abi).at(contractInstanceAddr);
 
@@ -36,8 +36,8 @@ controller.on("message", function(msg, rinfo) {
 	web3.personal.unlockAccount(web3.eth.coinbase, "bhun");
 
 	/* database로부터 지문 정보를 불러온 뒤, 대조한다 */
-	// var sql = "SELECT * FROM infos WHERE finger_print = ${msg}";
-	var sql = "SELECT * FROM infos WHERE finger_print = '0'"; // const -> var
+	// var sql = "SELECT * FROM infos WHERE finger_print = '" + msg + "'";
+	var sql = "SELECT * FROM infos WHERE finger_print = '0'"; 
 	dbConnection.query(sql, function(err, row) {
 		if(err) throw err;
 		// console.log(row);
@@ -46,9 +46,10 @@ controller.on("message", function(msg, rinfo) {
 		if(row.length > 0) {
 
 			/* transaction receipt를 참조하여 블록정보를 저장할 JSON object */
-			var blockInfo = {
-				hash: "",
-				number: ""
+			var infoLog = {
+				blockHash: "",
+				blockNumber: "",
+				transactionHash: ""
 			}
 
 			/* database에서 불러온 정보들을 transaction에 담기 위해서 변수에 임시로 저장 */
@@ -64,23 +65,26 @@ controller.on("message", function(msg, rinfo) {
 			var interval = setInterval(function() {
 				var receipt = web3.eth.getTransactionReceipt(transactionHash);
 				if(receipt != null) {
-					blockInfo.hash = receipt.blockHash;
-					blockInfo.number = receipt.blockNumber;
+					infoLog.blockHash = receipt.blockHash;
+					infoLog.blockNumber = receipt.blockNumber;
+					infoLog.transactionHash = receipt.transactionHash;
 
 					/* blockchain에 입주자 정보가 등재되었다면 interval 함수를 중지시킨다 */
-					if(blockInfo.hash.length > 0) {
-						console.log("\n*** 블록체인에 출입정보가 정상적으로 기록되었습니다. ***");
-						console.log("-----------------------------------------------------------------------------");
-						console.log("블록해쉬 : " + blockInfo.hash);
-						console.log("블록번호 : " + blockInfo.number);
+					if(infoLog.blockHash.length > 0) {
+						console.log("\n****************** 블록체인에 출입정보가 정상적으로 기록되었습니다 ******************");
+						console.log("*                                                                                   *");
+						console.log("* 블록해쉬 : " + infoLog.blockHash + "     *");
+						console.log("* 블록번호 : " + infoLog.blockNumber + "                                                                   *");
+						console.log("* 트랜잭션해쉬 : " + infoLog.transactionHash + " *");
 						/* 트랜잭션 해쉬정보도 담기, 블록정보와 트개잭션 정보 디비에 저장하기 */
-						console.log("-----------------------------------------------------------------------------\n");
+						console.log("*                                                                                   *");
+						console.log("*************************************************************************************\n");
 
 						sql = "INSERT INTO logs (name, address, phone, timestamp) VALUES('" + name + "','" + address + "','" + phone + "','" + inTime + "')"
 						dbConnection.query(sql);
 						sql = "SELECT * FROM logs"
 						dbConnection.query(sql, function(err, row) {
-							console.log("row : ", row);
+							// console.log("row : ", row);
 						});
 						clearInterval(interval);
 					}
