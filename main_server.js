@@ -45,7 +45,7 @@ var contractInstanceAddr = "0xedf024248419e6a52c2457ffc7e72709d7b8d882";
 /* 이미 생성되어 blockchain에 올라가 있는 인스턴스를 할당 */
 var paperInstance = web3.eth.contract(vars.abi).at(contractInstanceAddr);
 
-var invalidAccessFlag = 0;
+var invalidAccess = 0;
 
 /* CoAP을 타고 온 message 수신 */
 controller.on("message", function(msg, rinfo) {
@@ -57,8 +57,7 @@ controller.on("message", function(msg, rinfo) {
 	web3.personal.unlockAccount(web3.eth.coinbase, "bhun");
 
 	/* database로부터 지문 정보를 불러온 뒤, 대조한다 */
-	// var sql = "SELECT * FROM infos WHERE finger_print = '" + msg + "'";
-	var sql = "SELECT * FROM infos WHERE finger_print = '4'";
+	var sql = "SELECT * FROM infos WHERE finger_print = '" + msg + "'";
 
 	// var sql = "SELECT * FROM infos WHERE finger_print = '0'";
 	dbConnection.query(sql, function(err, row) {
@@ -71,7 +70,7 @@ controller.on("message", function(msg, rinfo) {
 		/* 지문 정보가 존재한다면 해당 지문에 해당하는 인물의 정보를 timestamp와 함께 transaction에 담아 발생시킨다 */
 		if(row.length > 0) {
 			/* 인증되지 않은 유저의 접근 회수를 갱신한다. */
-			invalidAccessFlag = 0;
+			invalidAccess = 0;
 
 			/* transaction receipt를 참조하여 블록정보를 저장할 JSON object */
 			var infoLog = {
@@ -124,14 +123,14 @@ controller.on("message", function(msg, rinfo) {
 			}, 50);
 			/* 지문 정보가 존재하지 않는다면 존재하지 않음을 알리고 아무일도 발생하지 않는다 */
 		} else {
-			invalidAccessFlag++;
+			invalidAccess++;
 			log = "\n인증되지 않은 유저가 잠금 해제를 시도하였습니다.\n" +
 			"시간 : " + inTime + "\n";
 			console.log(log);
 			fs.appendFile('log.txt', log, 'utf-8', function(err) { if(err) throw err; });
 
-			if(invalidAccessFlag >= 3) {
-				invalidAccessFlag = 0;
+			if(invalidAccess >= 3) {
+				invalidAccess = 0;
 				fs.readFile('log.txt', 'utf-8', function(err, data) {
 					mailOptions.text += data;
 					transporter.sendMail(mailOptions, function(err, info){
